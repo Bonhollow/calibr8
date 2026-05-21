@@ -1,0 +1,24 @@
+model: mlx-community/Qwen3-4B-Instruct-2507-4bit-g32
+
+lora_layers: 16
+lora_rank: 16
+lora_alpha: 32
+lora_dropout: 0.05
+
+batch_size: 2
+iters: 5000
+val_batches: 25
+learning_rate: 2e-5
+lr_schedule:
+  name: cosine_decay
+  arguments: [2e-5, 4000]
+  warmup: 200
+  warmup_init: 0.0
+mask_prompt: true
+grad_checkpoint: true
+
+data: data
+max_seq_length: 512
+
+adapter_path: adapters/confidence_qwen_v1
+save_every: 500

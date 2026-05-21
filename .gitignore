@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+.python-version
+
+# Data is reproducible via scripts/01-04
+data/
+
+# Adapter weights are on HuggingFace, not in git
+adapters/
+
+# Training logs
+training_*.txt
+
+# Internal notes
+NOTES.md
