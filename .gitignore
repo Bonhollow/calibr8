@@ -4,21 +4,13 @@ __pycache__/
 .DS_Store
 .python-version
 
-# Data is reproducible via scripts/01-04
 data/
-
-# Adapter weights are on HuggingFace, not in git
-adapters/
-
-# Training logs
 training_*.txt
-
-# Internal notes
 NOTES.md
-adapters/calibr8/
-
-# Build artifacts
-*.egg-info/
-
-# Fused model output (too large, can be regenerated)
 models/
+*.egg-info/
+__pycache__/
+*.pyc
+.DS_Store
+.python-version
+.venv/
