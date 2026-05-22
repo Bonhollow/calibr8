@@ -16,3 +16,9 @@ training_*.txt
 # Internal notes
 NOTES.md
 adapters/calibr8/
+
+# Build artifacts
+*.egg-info/
+
+# Fused model output (too large, can be regenerated)
+models/
