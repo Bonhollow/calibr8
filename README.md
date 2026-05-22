@@ -127,3 +127,13 @@ Fine-tuned with MLX LoRA (rank 16, 16 layers, 7.34M trainable params = 0.182% of
 ## License
 
 MIT
+
+---
+
+```
+license: mit
+language: en
+tags: confidence-calibration, mlx, qwen, classification, overclaiming, hedging
+pipeline_tag: text-classification
+library_name: mlx
+```
