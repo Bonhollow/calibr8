@@ -1,17 +1,3 @@
----
-license: mit
-language: en
-tags:
-- confidence-calibration
-- mlx
-- qwen
-- classification
-- overclaiming
-- hedging
-pipeline_tag: text-classification
-library_name: mlx
----
-
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/logo.svg">
