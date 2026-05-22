@@ -14,8 +14,8 @@ library_name: mlx
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/logo.svg">
-    <img src="assets/logo.svg" width="320" alt="Calibr8">
+    <source media="(prefers-color-scheme: dark)" srcset="https://huggingface.co/Bonhollow/calibr8/resolve/main/assets/logo.svg">
+    <img src="https://huggingface.co/Bonhollow/calibr8/resolve/main/assets/logo.svg" width="320" alt="Calibr8">
   </picture>
 </p>
 
