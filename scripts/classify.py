@@ -19,7 +19,8 @@ from pathlib import Path
 from mlx_lm import load, generate
 
 BASE_MODEL = "mlx-community/Qwen3-4B-Instruct-2507-4bit-g32"
-ADAPTER_PATH = Path(__file__).parent.parent / "adapters" / "confidence_qwen_v1"
+HF_REPO = "Bonhollow/calibr8"
+ADAPTER_PATH = Path(__file__).parent.parent / "adapters" / "calibr8"
 
 LABEL_NAMES = {0: "OVERCLAIMING", 1: "UNDERCLAIMING", 2: "CALIBRATED"}
 
@@ -41,9 +42,19 @@ _model = None
 _tokenizer = None
 
 
+def _ensure_adapter():
+    if not ADAPTER_PATH.exists():
+        print(f"Downloading Calibr8 adapter from {HF_REPO}...")
+        import subprocess
+        subprocess.run(
+            ["huggingface-cli", "download", HF_REPO, "--local-dir", str(ADAPTER_PATH)],
+            check=True
+        )
+
 def _load():
     global _model, _tokenizer
     if _model is None:
+        _ensure_adapter()
         _model, _tokenizer = load(BASE_MODEL, adapter_path=str(ADAPTER_PATH))
     return _model, _tokenizer
 

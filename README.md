@@ -43,7 +43,7 @@ pip install mlx-lm numpy
 ## Usage
 
 ```bash
-# Download adapter from HuggingFace
+# Download Calibr8 adapter
 pip install huggingface-hub
 huggingface-cli download Bonhollow/calibr8 --local-dir adapters/calibr8
 ```

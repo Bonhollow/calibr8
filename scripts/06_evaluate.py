@@ -13,7 +13,8 @@ from mlx_lm import load, generate
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 BASE_MODEL = "mlx-community/Qwen3-4B-Instruct-2507-4bit-g32"
-ADAPTER_PATH = Path(__file__).parent.parent / "adapters" / "confidence_qwen_v1"
+ADAPTER_PATH = Path(__file__).parent.parent / "adapters" / "calibr8"
+HF_REPO = "Bonhollow/calibr8"
 LABEL_NAMES = {0: "OVERCLAIMING", 1: "UNDERCLAIMING", 2: "CALIBRATED"}
 NAME_TO_ID = {v: k for k, v in LABEL_NAMES.items()}
 
@@ -64,6 +65,10 @@ def main():
 
     print("\nLoading base model + adapter...")
     t0 = time.time()
+    if not ADAPTER_PATH.exists():
+        print(f"Downloading Calibr8 adapter from {HF_REPO}...")
+        import subprocess
+        subprocess.run(["huggingface-cli", "download", HF_REPO, "--local-dir", str(ADAPTER_PATH)], check=True)
     model, tokenizer = load(BASE_MODEL, adapter_path=str(ADAPTER_PATH))
     print(f"  Loaded in {time.time() - t0:.1f}s")
 
