@@ -175,18 +175,37 @@ def balance_classes(records: list[dict], max_ratio: float = 1.5) -> list[dict]:
     if len(by_label) < 3:
         print("    [WARN] One or more calibration classes are missing. Skipping balancing.")
         return records
-    min_count = min(len(v) for v in by_label.values())
-    if min_count == 0:
-        print("    [WARN] Minority class has 0 records. Skipping balancing.")
-        return records
-    cap = int(min_count * max_ratio)
-    balanced = []
+
+    # Separate synthetic and real records — preserve all synthetic
+    synthetic_prefixes = ("synthetic_",)
     for label, items in by_label.items():
-        if len(items) > cap:
-            random.shuffle(items)
-            balanced.extend(items[:cap])
-        else:
-            balanced.extend(items)
+        synthetic = [r for r in items if r.get("source", "").startswith(synthetic_prefixes)]
+        real = [r for r in items if not r.get("source", "").startswith(synthetic_prefixes)]
+        by_label[label] = {"synthetic": synthetic, "real": real}
+
+    min_real = min(len(v["real"]) + len(v["synthetic"]) for v in by_label.values())
+    if min_real == 0:
+        print("    [WARN] Minority class has 0 records. Skipping balancing.")
+        return [r for v in by_label.values() for r in v["real"] + v["synthetic"]]
+
+    min_after_keep = min(len(v["synthetic"]) + int(len(v["real"]) * 0.3) for v in by_label.values())
+    cap = max(int(min_after_keep * max_ratio), min_real)
+
+    balanced = []
+    for label in sorted(by_label.keys()):
+        syn = by_label[label]["synthetic"]
+        real = by_label[label]["real"]
+        # Keep all synthetic
+        keep = list(syn)
+        # Fill remaining cap with real data
+        remaining = cap - len(syn)
+        if remaining > 0 and real:
+            random.shuffle(real)
+            keep.extend(real[:remaining])
+        elif remaining <= 0:
+            random.shuffle(syn)
+            keep = syn[:cap]
+        balanced.extend(keep)
     random.shuffle(balanced)
     return balanced
 
@@ -198,55 +217,140 @@ HEDGING_PREFIXES = [
     "Preliminary findings indicate that ",
     "It may be the case that ",
     "The data tentatively suggests that ",
-    "Early analysis indicates that ",
     "One interpretation is that ",
     "To some extent, ",
     "It could be argued that ",
+    "The results may indicate that ",
 ]
 
-OVERCONFIDENCE_PREFIXES = [
-    "Studies definitively prove that ",
-    "It is unquestionably true that ",
-    "Science has clearly shown that ",
-    "There is no doubt that ",
-    "It is an absolute fact that ",
-    "Research conclusively demonstrates that ",
-    "It is irrefutable that ",
-    "Experts unanimously agree that ",
-    "The evidence clearly indicates that ",
-    "It is well-established that ",
+# Subtle overconfidence patterns — natural-sounding, not blatant trigger phrases
+OVERCONFIDENCE_AMPLIFIERS = [
+    (r"\b(may|might|possibly)\b", "will"),               # "may cause" → "will cause"
+    (r"\bsuggests?\b", "proves"),                          # "suggests" → "proves"
+    (r"\bindicates?\b", "demonstrates"),                   # "indicates" → "demonstrates"
+    (r"\bappears? to\b", ""),                              # "appears to" → remove
+    (r"\bseems? to\b", ""),                                # "seems to" → remove
+    (r"\bcould\b", "does"),                                # "could cause" → "does cause"
+    (r"\bpotentially\b", ""),                              # "potentially" → remove
+    (r"\bsome evidence\b", "strong evidence"),             # "some evidence" → "strong evidence"
+    (r"\bin some cases\b", "in all cases"),                # generalize
+    (r"\boften\b", "always"),                              # generalize to absolute
+    (r"\bmaybe\b", "certainly"),                           # hedge → certainty
+    (r"\bperhaps\b", "undoubtedly"),                       # hedge → certainty
+    (r"\btends? to\b", "invariably"),                      # "tends to" → "invariably"
+    (r"\blargely\b", "completely"),                        # amplify
 ]
+
+OVERCONFIDENCE_INSERTIONS = [
+    "Clearly, ", "Undoubtedly, ", "Of course, ",
+    "It is clear that ", "There can be no doubt that ",
+    "The truth is that ", "As we know, ",
+]
+
+# Evidence qualifiers to turn OC claims into CAL (hard negatives)
+EVIDENCE_PREFIXES = [
+    "According to a 2023 study, ",
+    "Research published in a peer-reviewed journal indicates that ",
+    "A recent meta-analysis found that ",
+    "Clinical trial data suggests that ",
+    "Observational studies have shown that ",
+    "The available evidence indicates that ",
+    "In a controlled experiment, researchers found that ",
+    "Epidemiological data suggests a link between ",
+    "According to preliminary findings, ",
+    "A systematic review concluded that ",
+]
+
+
+def apply_overconfidence(text: str) -> str:
+    """Apply subtle overconfidence transformations to a sentence."""
+    for pattern, replacement in OVERCONFIDENCE_AMPLIFIERS:
+        text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
+    # Clean up double spaces from removals
+    text = re.sub(r'\s+', ' ', text).strip()
+    # Add certainty insertion sometimes
+    if random.random() < 0.3:
+        ins = random.choice(OVERCONFIDENCE_INSERTIONS)
+        text = ins + text[0].lower() + text[1:]
+    return text
+
+
+def apply_hedging(text: str) -> str:
+    """Apply hedging to a sentence by prepending a hedging phrase."""
+    prefix = random.choice(HEDGING_PREFIXES)
+    # Avoid double-hedging
+    if any(text.lower().startswith(p.lower().rstrip(" that ").rstrip()) for p in HEDGING_PREFIXES):
+        return None
+    return prefix + text[0].lower() + text[1:]
+
+
+def apply_evidence_context(text: str) -> str:
+    """Turn a bare claim into a CAL by prepending evidence context."""
+    prefix = random.choice(EVIDENCE_PREFIXES)
+    return prefix + text[0].lower() + text[1:]
 
 
 def generate_synthetic_uc(record: dict) -> dict:
-    """Generate an UNDERCLAIMING example by adding hedging to a CALIBRATED sentence."""
+    """Generate a natural UNDERCLAIMING example by adding hedging."""
     text = record["text"]
-    prefix = random.choice(HEDGING_PREFIXES)
-    # Avoid double-hedging if text already starts with hedging
-    if any(text.lower().startswith(p.lower().rstrip(" that ").rstrip()) for p in HEDGING_PREFIXES):
+    new_text = apply_hedging(text)
+    if not new_text:
         return None
-    new_text = prefix + text[0].lower() + text[1:]
+    # If original was already OC, tone it down to UC level
+    certainty = "low"
+    orig_label = record.get("label", -1)
+    if orig_label == 0:
+        certainty = "low"
+    elif orig_label == 2:
+        certainty = "low"
+    else:
+        certainty = "neutral"
     return {
         "text": new_text,
         "label": 1,
         "source": f"synthetic_uc_{record.get('source', 'unknown')}",
-        "certainty": "low",
+        "certainty": certainty,
         "original_label": "hedged_calibrated",
         "veracity_clarity": "unclear",
     }
 
 
 def generate_synthetic_oc(record: dict) -> dict:
-    """Generate an OVERCLAIMING example by adding overconfidence to a CALIBRATED sentence."""
+    """Generate a natural OVERCLAIMING example by amplifying certainty and removing hedges.
+
+    Unlike the old approach (blatant trigger prefixes), this uses subtle transformations
+    so the model learns to detect unwarranted certainty rather than surface trigger words.
+    """
     text = record["text"]
-    prefix = random.choice(OVERCONFIDENCE_PREFIXES)
-    new_text = prefix + text[0].lower() + text[1:]
+    new_text = apply_overconfidence(text)
+    if new_text == text:
+        # Transformation had no effect — fall back to insertion
+        ins = random.choice(OVERCONFIDENCE_INSERTIONS)
+        new_text = ins + text[0].lower() + text[1:]
     return {
         "text": new_text,
         "label": 0,
         "source": f"synthetic_oc_{record.get('source', 'unknown')}",
         "certainty": "high",
         "original_label": "overconfident_calibrated",
+        "veracity_clarity": "clear",
+    }
+
+
+def generate_hard_cal(record: dict) -> dict:
+    """Generate a hard-negative CALIBRATED example by adding evidence context to an OC sentence.
+
+    This teaches the model that scientific/technical language IS calibrated
+    when accompanied by proper evidence qualifiers.
+    """
+    text = record["text"]
+    new_text = apply_evidence_context(text)
+    return {
+        "text": new_text,
+        "label": 2,
+        "source": f"synthetic_hard_cal_{record.get('source', 'unknown')}",
+        "certainty": "neutral",
+        "original_label": "evidenced_overclaiming",
         "veracity_clarity": "clear",
     }
 
@@ -268,31 +372,45 @@ def main():
     uc_records = [r for r in all_records if r["label"] == 1]
 
     needed_uc = min(max(0, len(oc_records) - len(uc_records)), 10000)
-    needed_oc_extra = min(max(0, len(uc_records) - len(oc_records)), 5000)
+    # Always generate synthetic examples regardless of balance
+    # The new subtle OC examples teach the model to detect unwarranted certainty
+    # without relying on surface trigger words
+    random.shuffle(cal_records)
 
-    if needed_uc > 0:
-        random.shuffle(cal_records)
-        uc_synthetic = []
-        for r in cal_records[:needed_uc * 2]:
-            syn = generate_synthetic_uc(r)
-            if syn:
-                uc_synthetic.append(syn)
-                if len(uc_synthetic) >= needed_uc:
-                    break
-        all_records.extend(uc_synthetic)
-        print(f"  Generated {len(uc_synthetic)} synthetic UNDERCLAIMING examples")
+    needed_uc = min(10000, len(cal_records) // 2)
+    needed_oc_subtle = min(10000, len(cal_records) // 2)
+    needed_hard_cal = min(10000, len(oc_records))
 
-    if needed_oc_extra > 0:
-        random.shuffle(cal_records)
-        oc_synthetic = []
-        for r in cal_records[:needed_oc_extra * 2]:
-            syn = generate_synthetic_oc(r)
-            if syn:
-                oc_synthetic.append(syn)
-                if len(oc_synthetic) >= needed_oc_extra:
-                    break
-        all_records.extend(oc_synthetic)
-        print(f"  Generated {len(oc_synthetic)} synthetic OVERCLAIMING examples")
+    uc_synthetic = []
+    for r in cal_records:
+        if len(uc_synthetic) >= needed_uc:
+            break
+        syn = generate_synthetic_uc(r)
+        if syn:
+            uc_synthetic.append(syn)
+    all_records.extend(uc_synthetic)
+    print(f"  Generated {len(uc_synthetic)} synthetic UNDERCLAIMING examples")
+
+    oc_synthetic = []
+    for r in cal_records[:needed_oc_subtle * 2]:
+        if len(oc_synthetic) >= needed_oc_subtle:
+            break
+        syn = generate_synthetic_oc(r)
+        if syn:
+            oc_synthetic.append(syn)
+    all_records.extend(oc_synthetic)
+    print(f"  Generated {len(oc_synthetic)} subtle OVERCLAIMING examples")
+
+    random.shuffle(oc_records)
+    hard_cal = []
+    for r in oc_records:
+        if len(hard_cal) >= needed_hard_cal:
+            break
+        syn = generate_hard_cal(r)
+        if syn:
+            hard_cal.append(syn)
+    all_records.extend(hard_cal)
+    print(f"  Generated {len(hard_cal)} hard-negative CALIBRATED examples (OC + evidence context)")
 
     # Multi-source held-out: 70/30 split per source
     by_source = defaultdict(list)
