@@ -12,6 +12,13 @@ pipeline_tag: text-classification
 library_name: mlx
 ---
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo.svg">
+    <img src="assets/logo.svg" width="320" alt="Calibr8">
+  </picture>
+</p>
+
 # Calibr8
 
 A ~4B parameter model (Qwen3-4B-Instruct + LoRA) fine-tuned to classify text by confidence calibration.
@@ -49,12 +56,18 @@ pip install mlx-lm numpy
 
 ## Usage
 
+```bash
+# Download adapter from HuggingFace
+pip install huggingface-hub
+huggingface-cli download Bonhollow/calibr8 --local-dir adapters/calibr8
+```
+
 ```python
 from mlx_lm import load, generate
 
 model, tokenizer = load(
     "mlx-community/Qwen3-4B-Instruct-2507-4bit-g32",
-    adapter_path="path/to/adapter"
+    adapter_path="adapters/calibr8"
 )
 
 def classify(text: str) -> str:
