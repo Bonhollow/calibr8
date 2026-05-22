@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#16213e"/>
+    </linearGradient>
+    <linearGradient id="check" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00d4aa"/>
+      <stop offset="100%" style="stop-color:#00b894"/>
+    </linearGradient>
+    <linearGradient id="over" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff6b6b"/>
+      <stop offset="100%" style="stop-color:#ee5a24"/>
+    </linearGradient>
+    <linearGradient id="under" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#74b9ff"/>
+      <stop offset="100%" style="stop-color:#0984e3"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" rx="40" fill="url(#bg)"/>
+  <!-- Target circles -->
+  <circle cx="200" cy="155" r="90" fill="none" stroke="#ffffff10" stroke-width="1"/>
+  <circle cx="200" cy="155" r="65" fill="none" stroke="#ffffff08" stroke-width="1"/>
+  <circle cx="200" cy="155" r="40" fill="none" stroke="#ffffff06" stroke-width="1"/>
+  <!-- Arrows -->
+  <g stroke-width="4" stroke-linecap="round" fill="none">
+    <!-- OVER arrow (too high) -->
+    <line x1="110" y1="85" x2="155" y2="125" stroke="url(#over)" opacity="0.9"/>
+    <polygon points="152,122 160,130 148,130" fill="url(#over)" opacity="0.9"/>
+    <!-- UNDER arrow (too low) -->
+    <line x1="245" y1="200" x2="290" y2="230" stroke="url(#under)" opacity="0.9"/>
+    <polygon points="287,227 295,235 283,235" fill="url(#under)" opacity="0.9"/>
+    <!-- CALIBRATED arrow (hitting center) -->
+    <line x1="200" y1="240" x2="200" y2="180" stroke="url(#check)" stroke-width="5" opacity="0.9"/>
+    <polygon points="196,184 200,172 204,184" fill="url(#check)" opacity="0.9"/>
+  </g>
+  <!-- Center dot -->
+  <circle cx="200" cy="155" r="6" fill="#00d4aa"/>
+  <!-- Target crosshair -->
+  <line x1="185" y1="155" x2="215" y2="155" stroke="#00d4aa40" stroke-width="1"/>
+  <line x1="200" y1="140" x2="200" y2="170" stroke="#00d4aa40" stroke-width="1"/>
+  <!-- Labels -->
+  <text x="200" y="310" text-anchor="middle" font-family="'SF Mono','Courier New',monospace" font-size="32" font-weight="bold" fill="#ffffff" letter-spacing="3">CALIBR8</text>
+  <text x="200" y="340" text-anchor="middle" font-family="'SF Mono','Courier New',monospace" font-size="12" fill="#ffffff60" letter-spacing="1">CONFIDENCE CALIBRATION DETECTOR</text>
+  <!-- Legend -->
+  <rect x="55" y="355" width="8" height="8" rx="2" fill="url(#over)"/>
+  <text x="68" y="364" font-family="'SF Mono','Courier New',monospace" font-size="10" fill="#ffffff80">OVER</text>
+  <rect x="155" y="355" width="8" height="8" rx="2" fill="url(#check)"/>
+  <text x="168" y="364" font-family="'SF Mono','Courier New',monospace" font-size="10" fill="#ffffff80">CAL</text>
+  <rect x="245" y="355" width="8" height="8" rx="2" fill="url(#under)"/>
+  <text x="258" y="364" font-family="'SF Mono','Courier New',monospace" font-size="10" fill="#ffffff80">UNDER</text>
+</svg>
