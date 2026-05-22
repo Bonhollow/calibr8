@@ -12,7 +12,7 @@ pipeline_tag: text-classification
 library_name: mlx
 ---
 
-# Confidence Calibration Detector
+# Calibr8
 
 A ~4B parameter model (Qwen3-4B-Instruct + LoRA) fine-tuned to classify text by confidence calibration.
 
