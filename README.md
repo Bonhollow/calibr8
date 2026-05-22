@@ -1,3 +1,17 @@
+---
+license: mit
+language: en
+tags:
+  - confidence-calibration
+  - mlx
+  - qwen
+  - classification
+  - overclaiming
+  - hedging
+pipeline_tag: text-classification
+library_name: mlx
+---
+
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/logo.svg">
@@ -23,11 +37,11 @@ Given any claim or statement, it detects whether the language is:
 
 | Metric | Score | Target |
 |--------|-------|--------|
-| Macro F1 | **0.736** | >0.72 |
-| OVERCLAIMING F1 | 0.707 | >0.75 |
-| UNDERCLAIMING F1 | **0.886** | >0.60 |
-| CALIBRATED F1 | 0.616 | >0.75 |
-| Accuracy | 73.0% | — |
+| Macro F1 | **0.802** | >0.72 |
+| OVERCLAIMING F1 | **0.767** | >0.75 |
+| UNDERCLAIMING F1 | **0.899** | >0.60 |
+| CALIBRATED F1 | **0.741** | >0.75 |
+| Accuracy | 80.6% | — |
 
 Trained on 218K records from LIAR-PLUS, AVeriTeC, SciFact, HealthVer, ClaimBuster, FEVER, and YMETHO, with rule-based synthetic augmentation for class balance.
 
@@ -37,15 +51,14 @@ Trained on 218K records from LIAR-PLUS, AVeriTeC, SciFact, HealthVer, ClaimBuste
 - Python 3.11+
 
 ```bash
-pip install mlx-lm numpy
+pip install mlx-lm
 ```
 
 ## Usage
 
 ```bash
 # Download Calibr8 adapter
-pip install huggingface-hub
-huggingface-cli download Bonhollow/calibr8 --local-dir adapters/calibr8
+hf download Bonhollow/calibr8 --local-dir adapters/calibr8
 ```
 
 ```python
@@ -64,12 +77,6 @@ def classify(text: str) -> str:
 
 print(classify("Studies prove this cures inflammation."))
 # OVERCLAIMING (0.78). The claim expresses confidence that exceeds what the evidence supports. Span: "proven"
-```
-
-### CLI
-
-```bash
-python3 scripts/classify.py "Studies prove this cures inflammation."
 ```
 
 Output:
@@ -113,13 +120,3 @@ Fine-tuned with MLX LoRA (rank 16, 16 layers, 7.34M trainable params = 0.182% of
 ## License
 
 MIT
-
----
-
-```
-license: mit
-language: en
-tags: confidence-calibration, mlx, qwen, classification, overclaiming, hedging
-pipeline_tag: text-classification
-library_name: mlx
-```
